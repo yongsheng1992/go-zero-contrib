@@ -1,4 +1,4 @@
-module go-zero-contrib
+module github.com/yongsheng1992/go-zero-contrib
 
 go 1.24
 

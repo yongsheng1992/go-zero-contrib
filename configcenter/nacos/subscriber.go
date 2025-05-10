@@ -1,10 +1,11 @@
 package nacos
 
 import (
+	"sync"
+
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/zeromicro/go-zero/core/configcenter/subscriber"
-	"sync"
 )
 
 type nacosSubscriber struct {
@@ -44,15 +45,15 @@ func (s *nacosSubscriber) onChange(namespace, group, dataId, data string) {
 	}
 
 	s.lock.Lock()
-	defer s.lock.Unlock()
 	s.currentValue = data
+	s.lock.Unlock()
 
 	for _, listener := range s.listeners {
 		listener()
 	}
 }
 
-func MustNacosSubscriber(nacosClient config_client.IConfigClient, dataId, group string) subscriber.Subscriber {
+func MustNacosSubscriber(nacosClient config_client.IConfigClient, namespace, dataId, group string) subscriber.Subscriber {
 	configContent, err := nacosClient.GetConfig(vo.ConfigParam{DataId: dataId, Group: group})
 	if err != nil {
 		panic(err)
@@ -62,6 +63,7 @@ func MustNacosSubscriber(nacosClient config_client.IConfigClient, dataId, group 
 		listeners:    []func(){},
 		currentValue: configContent,
 		nacosClient:  nacosClient,
+		Namespace:    namespace,
 		DataId:       dataId,
 		Group:        group,
 	}
